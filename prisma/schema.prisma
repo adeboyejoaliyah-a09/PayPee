@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  createdAt DateTime @default(now())
+  users     User[]
+  orders    Order[]
+  products  Product[]
+  events    AuditEvent[]
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String
+  password   String
+  role       String   @default("merchant")
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  businessId     String
+  name           String
+  sku            String
+  price          Float
+  stock          Int
+  category       String
+  margin         Float? 
+  createdAt      DateTime @default(now())
+  business       Business @relation(fields: [businessId], references: [id])
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  businessId    String
+  customerName  String
+  email         String
+  amount        Float
+  currency      String
+  status        String   @default("pending")
+  provider      String   @default("demo")
+  providerOrder String?
+  createdAt     DateTime @default(now())
+  business      Business @relation(fields: [businessId], references: [id])
+}
+
+model RiskFinding {
+  id          String   @id @default(cuid())
+  orderId     String?
+  severity    String
+  confidence  Float
+  score       Int
+  reasons     String
+  recommendation String
+  status      String @default("open")
+  createdAt   DateTime @default(now())
+}
+
+model Investigation {
+  id          String   @id @default(cuid())
+  orderId     String
+  notes       String
+  resolution  String?
+  createdAt   DateTime @default(now())
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  businessId  String?
+  actor       String
+  action      String
+  details     String
+  createdAt   DateTime @default(now())
+  business    Business? @relation(fields: [businessId], references: [id])
+}
