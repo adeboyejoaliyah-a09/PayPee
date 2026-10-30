@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Business {
@@ -77,11 +78,11 @@ model Investigation {
 }
 
 model AuditEvent {
-  id          String   @id @default(cuid())
-  businessId  String?
-  actor       String
-  action      String
-  details     String
-  createdAt   DateTime @default(now())
-  business    Business? @relation(fields: [businessId], references: [id])
+  id         String    @id @default(cuid())
+  businessId String?
+  actor      String
+  action     String
+  details    String
+  createdAt  DateTime  @default(now())
+  business   Business? @relation(fields: [businessId], references: [id])
 }

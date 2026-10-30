@@ -13,7 +13,9 @@ export type AiQuery = {
 };
 
 export function generateAiInsight(query: AiQuery) {
-  const hasAiKey = Boolean(process.env.OPENAI_API_KEY);
+  const provider = (process.env.AI_PROVIDER ?? 'openai').toLowerCase();
+  const apiKey = provider === 'gemini' ? process.env.GEMINI_API_KEY : process.env.OPENAI_API_KEY;
+  const hasAiKey = Boolean(apiKey);
 
   if (!hasAiKey) {
     return {
@@ -26,7 +28,7 @@ export function generateAiInsight(query: AiQuery) {
   }
 
   return {
-    mode: 'provider',
+    mode: provider,
     answer: 'AI provider configured; response will be generated from the retrieved business dataset.',
     confidence: 0.9,
     evidence: ['Authorized merchant-level data only', 'Tooling and prompts validated before execution'],

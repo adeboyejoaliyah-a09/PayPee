@@ -4,13 +4,12 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.auditEvent.deleteMany();
-  await prisma.investigation.deleteMany();
-  await prisma.riskFinding.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.business.deleteMany();
+  const businessExists = await prisma.business.findFirst();
+
+  if (businessExists) {
+    console.log('Seed skipped: demo business already exists.');
+    return;
+  }
 
   const business = await prisma.business.create({
     data: {
@@ -43,9 +42,9 @@ async function main() {
   await prisma.order.createMany({
     data: [
       { businessId: business.id, customerName: 'Ava Thompson', email: 'ava@example.com', amount: 129.99, currency: 'USD', status: 'completed', provider: 'PayPal Sandbox', providerOrder: 'demo-1' },
-      { businessId: business.id, customerName: 'Leah Chen', email: 'leah@example.com', amount: 214.50, currency: 'USD', status: 'pending', provider: 'PayPal Sandbox', providerOrder: 'demo-2' },
-      { businessId: business.id, customerName: 'Marcus Rivera', email: 'marcus@example.com', amount: 59.00, currency: 'USD', status: 'completed', provider: 'PayPal Sandbox', providerOrder: 'demo-3' },
-      { businessId: business.id, customerName: 'Olivia Park', email: 'olivia@example.com', amount: 394.20, currency: 'USD', status: 'held', provider: 'PayPal Sandbox', providerOrder: 'demo-4' },
+      { businessId: business.id, customerName: 'Leah Chen', email: 'leah@example.com', amount: 214.5, currency: 'USD', status: 'pending', provider: 'PayPal Sandbox', providerOrder: 'demo-2' },
+      { businessId: business.id, customerName: 'Marcus Rivera', email: 'marcus@example.com', amount: 59, currency: 'USD', status: 'completed', provider: 'PayPal Sandbox', providerOrder: 'demo-3' },
+      { businessId: business.id, customerName: 'Olivia Park', email: 'olivia@example.com', amount: 394.2, currency: 'USD', status: 'held', provider: 'PayPal Sandbox', providerOrder: 'demo-4' },
     ],
   });
 

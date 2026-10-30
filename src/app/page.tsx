@@ -1,112 +1,93 @@
-import { ArrowRight, CheckCircle2, DollarSign, ShieldAlert, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { MerchantShell } from '@/app/_components/merchant-shell';
+import { getMerchantDashboardData } from '@/lib/merchant-data';
 
-const navItems = ['Overview', 'Transactions', 'Transaction Investigation', 'Intelligence', 'Analytics', 'Products & Inventory', 'Cash Flow & Savings', 'Growth Opportunities'];
-const metrics = [
-  { label: 'Gross revenue', value: '$284.6K', change: '+12.4%' },
-  { label: 'Open issues', value: '14', change: '5 urgent' },
-  { label: 'Risk alerts', value: '3', change: '2 high' },
-  { label: 'Cash flow', value: '$76.2K', change: '+8.1%' },
-];
+export default async function OverviewPage() {
+  const dashboard = await getMerchantDashboardData();
 
-export default function Page() {
+  if (dashboard.error) {
+    return (
+      <MerchantShell title="Business overview" subtitle="The overview page for your merchant operations and current performance.">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
+          {dashboard.error}
+        </div>
+      </MerchantShell>
+    );
+  }
+
+  const metrics = [
+    { label: 'Net sales', value: `$${dashboard.summary.netSales.toFixed(2)}`, change: `${dashboard.summary.paidOrders} paid orders` },
+    { label: 'Pending auth', value: `${dashboard.summary.pendingAuthorizations}`, change: 'Awaiting review' },
+    { label: 'Held reviews', value: `${dashboard.summary.heldTransactions}`, change: 'Manual action needed' },
+    { label: 'Inventory value', value: `$${dashboard.summary.totalInventoryValue.toFixed(2)}`, change: `${dashboard.summary.lowStockProducts} low-stock products` },
+  ];
+
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="flex min-h-screen">
-        <aside className="w-72 border-r border-slate-800 bg-slate-900/80 p-6">
-          <div className="mb-10 flex items-center gap-3">
-            <div className="rounded-xl bg-blue-600 p-2 text-white">
-              <DollarSign className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Merchant OS</p>
-              <h1 className="text-xl font-semibold">PayPal AI</h1>
+    <MerchantShell title="Business overview" subtitle="The overview page for your merchant operations and current performance.">
+      <section className="grid gap-4 md:grid-cols-4">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">{metric.label}</p>
+            <div className="mt-3 flex items-end justify-between gap-3">
+              <span className="text-3xl font-semibold tracking-tight text-slate-900">{metric.value}</span>
+              <span className="text-xs text-emerald-600">{metric.change}</span>
             </div>
           </div>
+        ))}
+      </section>
 
-          <nav className="space-y-2">
-            {navItems.map((item, index) => (
-              <button
-                key={item}
-                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm ${
-                  index === 0 ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800/80'
-                }`}
-              >
-                <span>{item}</span>
-                {index === 0 && <ArrowRight className="h-4 w-4" />}
-              </button>
-            ))}
-          </nav>
-        </aside>
+      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">Recent transaction activity</p>
+            <h3 className="text-2xl font-semibold text-slate-900">Recent payments</h3>
+          </div>
+        </div>
 
-        <div className="flex-1 p-8">
-          <header className="mb-8 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-300">Welcome back</p>
-              <h2 className="text-3xl font-bold">Business overview</h2>
-            </div>
-            <button className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500">
-              Create report
-            </button>
-          </header>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="text-slate-500">
+              <tr className="border-b border-slate-200">
+                <th className="pb-3 pr-4 font-medium">Order / customer</th>
+                <th className="pb-3 pr-4 font-medium">Time</th>
+                <th className="pb-3 pr-4 font-medium">Amount</th>
+                <th className="pb-3 pr-4 font-medium">Payment status</th>
+                <th className="pb-3 pr-4 font-medium">Next step</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dashboard.orders.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-slate-500">No transaction records found yet.</td>
+                </tr>
+              ) : (
+                dashboard.orders.slice(0, 4).map((row) => (
+                  <tr key={row.id} className="border-b border-slate-200 last:border-b-0">
+                    <td className="py-3 pr-4 font-medium text-slate-800">{row.providerOrder ?? row.id.slice(0, 8)} • {row.customerName}</td>
+                    <td className="py-3 pr-4 text-slate-600">{new Date(row.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
+                    <td className="py-3 pr-4 font-medium text-slate-800">${Number(row.amount).toFixed(2)}</td>
+                    <td className="py-3 pr-4">
+                      <span className={`inline-flex rounded-full px-2 py-1 text-xs ${row.status === 'pending' ? 'bg-amber-100 text-amber-700' : row.status === 'held' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {row.status === 'held' ? 'Held' : row.status === 'pending' ? 'Pending' : 'Completed'}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <button className="inline-flex items-center gap-1 text-violet-700">Investigate <ArrowRight className="h-3.5 w-3.5" /></button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-          <section className="grid gap-4 md:grid-cols-4">
-            {metrics.map((metric) => (
-              <div key={metric.label} className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg shadow-slate-950/30">
-                <p className="text-sm text-slate-400">{metric.label}</p>
-                <div className="mt-3 flex items-end justify-between">
-                  <span className="text-2xl font-semibold">{metric.value}</span>
-                  <span className="text-xs text-emerald-400">{metric.change}</span>
-                </div>
-              </div>
-            ))}
-          </section>
-
-          <section className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-400">Revenue trend</p>
-                  <h3 className="text-xl font-semibold">Quarterly performance</h3>
-                </div>
-                <TrendingUp className="h-5 w-5 text-emerald-400" />
-              </div>
-
-              <div className="flex h-56 items-end gap-3">
-                {[36, 48, 52, 61, 58, 74, 80].map((bar, idx) => (
-                  <div key={idx} className="flex-1 rounded-t-xl bg-gradient-to-t from-blue-700 to-cyan-400" style={{ height: `${bar}%` }} />
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                <div className="mb-4 flex items-center gap-2 text-amber-300">
-                  <ShieldAlert className="h-5 w-5" />
-                  <p className="text-sm font-medium">Risk alerts</p>
-                </div>
-                <ul className="space-y-3 text-sm text-slate-300">
-                  <li className="rounded-lg bg-slate-800/80 p-3">High-risk refund pattern for orders over $2,500.</li>
-                  <li className="rounded-lg bg-slate-800/80 p-3">Duplicate customer data detected in one shipping profile.</li>
-                </ul>
-              </div>
-
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                <div className="mb-4 flex items-center gap-2 text-emerald-300">
-                  <Sparkles className="h-5 w-5" />
-                  <p className="text-sm font-medium">AI guidance</p>
-                </div>
-                <p className="text-sm text-slate-300">
-                  Inventory turnover improved 9.6% after pricing updates in your top item clusters.
-                </p>
-                <div className="mt-4 flex items-center gap-2 text-sm text-blue-300">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Action recommended: review high-margin SKUs this week.
-                </div>
-              </div>
-            </div>
-          </section>
+      <div className="mt-8 rounded-2xl border border-violet-100 bg-violet-50 p-4 text-sm text-violet-800">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>AI guidance is based on the current merchant dataset and does not fabricate financial results.</span>
         </div>
       </div>
-    </main>
+    </MerchantShell>
   );
 }
